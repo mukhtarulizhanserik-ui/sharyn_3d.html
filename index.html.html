@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Шарын Шатқалы: Эко-туризм 3D Моделі</title>
+  <meta name="description" content="Шарын шатқалының интерактивті 3D эко-туризм моделі: маусымдық көріністер, камера режимдері және экономикалық тиімділік калькуляторы." />
+  <meta property="og:title" content="Шарын Шатқалы: Эко-туризм 3D Моделі" />
+  <meta property="og:description" content="Шарын шатқалының интерактивті 3D эко-туризм моделі: маусымдық көріністер, камера режимдері және экономикалық тиімділік калькуляторы." />
+  <meta property="og:type" content="website" />
+  <style>
+    :root {
+      --hud-bg: rgba(15, 23, 42, 0.84);
+      --hud-bg-hover: rgba(30, 41, 59, 0.94);
+      --hud-border: rgba(255, 255, 255, 0.16);
+      --hud-text: #f8fafc;
+      --hud-muted: #cbd5e1;
+      --accent: #f59e0b;
+      --accent-strong: #d97706;
+      --teal: #14b8a6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #87ceeb;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--hud-text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .hud-wrapper {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .title-card {
+      pointer-events: auto;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 14px;
+      padding: 12px 18px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+      max-width: 440px;
+    }
+
+    .title-card h1 {
+      font-size: 1.08rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      line-height: 1.3;
+    }
+
+    .title-subtitle {
+      margin-top: 4px;
+      font-size: 0.78rem;
+      color: var(--hud-muted);
+      line-height: 1.35;
+    }
+
+    .calc-card {
+      pointer-events: auto;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 14px;
+      width: 310px;
+      max-width: calc(100vw - 36px);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+
+    .calc-header {
+      width: 100%;
+      background: transparent;
+      border: none;
+      color: var(--hud-text);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: left;
+    }
+
+    .calc-header:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .calc-chevron {
+      font-size: 0.8rem;
+      color: var(--accent);
+      transition: transform 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .calc-card.collapsed .calc-chevron {
+      transform: rotate(-90deg);
+    }
+
+    .calc-body {
+      padding: 4px 16px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .calc-card.collapsed .calc-body {
+      display: none;
+    }
+
+    .slider-group {
+      margin-top: 12px;
+    }
+
+    .slider-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 0.82rem;
+      margin-bottom: 6px;
+    }
+
+    .slider-label {
+      color: var(--hud-muted);
+      font-weight: 500;
+    }
+
+    .slider-value {
+      color: #ffffff;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+      cursor: pointer;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .metric-box {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 9px 10px;
+    }
+
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--hud-muted);
+      line-height: 1.25;
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--teal);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .metric-value.payback {
+      color: #fbbf24;
+    }
+
+    .bottom-dock {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      width: 100%;
+    }
+
+    .dock-panel {
+      pointer-events: auto;
+      background: var(--hud-bg);
+      border: 1px solid var(--hud-border);
+      border-radius: 16px;
+      padding: 10px 14px;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.34);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      max-width: 96vw;
+    }
+
+    .btn-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .dock-divider {
+      width: 1px;
+      height: 26px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .hud-btn {
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--hud-text);
+      border-radius: 10px;
+      padding: 8px 13px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    }
+
+    .hud-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .hud-btn:active {
+      transform: scale(0.97);
+    }
+
+    .hud-btn.active {
+      background: var(--accent);
+      border-color: #fde68a;
+      color: #0f172a;
+    }
+
+    .hud-btn.cam-btn.active {
+      background: var(--teal);
+      border-color: #99f6e4;
+      color: #042f2e;
+    }
+
+    @media (max-width: 760px) {
+      .hud-wrapper {
+        padding: 12px;
+      }
+
+      .title-card {
+        padding: 10px 14px;
+      }
+
+      .title-card h1 {
+        font-size: 0.95rem;
+      }
+
+      .dock-divider {
+        display: none;
+      }
+
+      .hud-btn {
+        padding: 7px 10px;
+        font-size: 0.78rem;
+      }
+
+      .calc-card {
+        width: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hud-wrapper">
+    <div class="top-bar">
+      <div class="title-card">
+        <h1>Шарын Шатқалы: Эко-туризм 3D Моделі</h1>
+        <div class="title-subtitle">Қамалдар аңғары · 4 эко-киіз үй · Өзен арнасы · Джип туры</div>
+      </div>
+
+      <div class="calc-card" id="calcCard">
+        <button class="calc-header" id="calcToggleBtn" type="button" aria-expanded="true">
+          <span>Экономикалық калькулятор</span>
+          <span class="calc-chevron">▼</span>
+        </button>
+        <div class="calc-body" id="calcBody">
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span class="slider-label">Күндік туристер</span>
+              <span class="slider-value" id="touristsVal">200 адам</span>
+            </div>
+            <input type="range" id="touristsSlider" min="50" max="500" step="10" value="200" />
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label-row">
+              <span class="slider-label">Билет бағасы</span>
+              <span class="slider-value" id="priceVal">4 500 ₸</span>
+            </div>
+            <input type="range" id="priceSlider" min="2000" max="10000" step="500" value="4500" />
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-box">
+              <div class="metric-label">Жылдық табыс (млн ₸)</div>
+              <div class="metric-value" id="annualRevenue">328.5 млн ₸</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">Өтелу мерзімі (жыл)</div>
+              <div class="metric-value payback" id="paybackPeriod">2.1 жыл</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-dock">
+      <div class="dock-panel">
+        <div class="btn-group" role="group" aria-label="Жыл мезгілдері">
+          <button class="hud-btn season-btn active" data-season="summer" type="button">☀ Жаз</button>
+          <button class="hud-btn season-btn" data-season="winter" type="button">❄ Қыс</button>
+          <button class="hud-btn season-btn" data-season="spring" type="button">🌸 Көктем</button>
+          <button class="hud-btn season-btn" data-season="autumn" type="button">🍂 Күз</button>
+        </div>
+
+        <div class="dock-divider"></div>
+
+        <div class="btn-group" role="group" aria-label="Камера режимдері">
+          <button class="hud-btn cam-btn active" data-cam="free" type="button">🔭 Еркін шолу</button>
+          <button class="hud-btn cam-btn" data-cam="eagle" type="button">🦅 Бүркітпен ұшу</button>
+          <button class="hud-btn cam-btn" data-cam="jeep" type="button">🚙 Джиппен жүру</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x87ceeb);
+      scene.fog = new THREE.FogExp2(0x87ceeb, 0.0036);
+
+      const camera = new THREE.PerspectiveCamera(
+        52,
+        window.innerWidth / window.innerHeight,
+        0.5,
+        500
+      );
+      camera.position.set(0, 45, 85);
+      camera.lookAt(0, 0, 0);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.05;
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.body.appendChild(renderer.domElement);
+
+      renderer.domElement.addEventListener('webglcontextlost', function (e) {
+        e.preventDefault();
+      });
+
+      const controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0, 0);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.06;
+      controls.maxPolarAngle = Math.PI * 0.48;
+      controls.minDistance = 16;
+      controls.maxDistance = 145;
+      controls.update();
+
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+      scene.add(ambientLight);
+
+      const hemiLight = new THREE.HemisphereLight(0x9be0ff, 0x9b5434, 0.35);
+      hemiLight.position.set(0, 60, 0);
+      scene.add(hemiLight);
+
+      const dirLight = new THREE.DirectionalLight(0xffeedd, 1.2);
+      dirLight.position.set(42, 68, 48);
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize.width = 2048;
+      dirLight.shadow.mapSize.height = 2048;
+      dirLight.shadow.camera.near = 10;
+      dirLight.shadow.camera.far = 220;
+      const shadowExtent = 78;
+      dirLight.shadow.camera.left = -shadowExtent;
+      dirLight.shadow.camera.right = shadowExtent;
+      dirLight.shadow.camera.top = shadowExtent;
+      dirLight.shadow.camera.bottom = -shadowExtent;
+      dirLight.shadow.bias = -0.0005;
+      dirLight.shadow.normalBias = 0.03;
+      scene.add(dirLight);
+
+      function canyonCenterX(z) {
+        return Math.sin(z * 0.04) * 8.5 + Math.cos(z * 0.021) * 2.5;
+      }
+
+      function riverCenterX(z) {
+        return canyonCenterX(z) - 9.8 + Math.sin(z * 0.085) * 1.4;
+      }
+
+      function getTerrainHeight(x, z) {
+        const cx = canyonCenterX(z);
+        const dx = Math.abs(x - cx);
+        const rx = Math.abs(x - riverCenterX(z));
+
+        if (dx < 18.5) {
+          let bed = 0;
+          if (rx < 3.4) {
+            const rt = 1 - rx / 3.4;
+            bed = -0.55 * rt * rt;
+          }
+          const micro = Math.sin(x * 0.14 + z * 0.11) * 0.12;
+          const roadMask = Math.max(0, 1 - Math.abs(dx - 10.5) / 5.5);
+          return bed + micro * (1 - roadMask) * (rx < 4.2 ? 0 : 1);
+        }
+
+        const t = Math.min(1, (dx - 18.5) / 36);
+        const baseRise = Math.pow(t, 0.72) * 27;
+        const strataSteps = Math.sin(baseRise * 0.82) * 0.95 * t;
+        const erosion =
+          (Math.sin(x * 0.18 + z * 0.14) * 1.9 +
+            Math.cos(x * 0.31 - z * 0.23) * 1.15 +
+            Math.sin(z * 0.42) * 0.65) *
+          Math.min(1, t * 1.4);
+
+        return Math.max(0, baseRise + strataSteps + erosion);
+      }
+
+      function createRockNoiseTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#e5e5e5';
+        ctx.fillRect(0, 0, 256, 256);
+
+        for (let y = 0; y < 256; y += 4) {
+          const band = 215 + Math.sin(y * 0.18) * 18 + (Math.random() - 0.5) * 18;
+          ctx.fillStyle = `rgb(${band | 0}, ${(band * 0.96) | 0}, ${(band * 0.93) | 0})`;
+          ctx.fillRect(0, y, 256, 4);
+        }
+        for (let i = 0; i < 1800; i++) {
+          const px = Math.random() * 256;
+          const py = Math.random() * 256;
+          const sz = 1 + Math.random() * 2.5;
+          const v = 180 + Math.random() * 65;
+          ctx.fillStyle = `rgba(${v | 0},${v | 0},${v | 0},0.22)`;
+          ctx.fillRect(px, py, sz, sz);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(8, 8);
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      const terrainGeo = new THREE.PlaneGeometry(160, 160, 64, 64);
+      terrainGeo.rotateX(-Math.PI / 2);
+
+      const posAttr = terrainGeo.attributes.position;
+      const vertCount = posAttr.count;
+      const terrainBaseHeights = new Float32Array(vertCount);
+      const terrainColors = new Float32Array(vertCount * 3);
+
+      for (let i = 0; i < vertCount; i++) {
+        const vx = posAttr.getX(i);
+        const vz = posAttr.getZ(i);
+        const vy = getTerrainHeight(vx, vz);
+        posAttr.setY(i, vy);
+        terrainBaseHeights[i] = vy;
+      }
+
+      terrainGeo.setAttribute('color', new THREE.BufferAttribute(terrainColors, 3));
+      terrainGeo.computeVertexNormals();
+
+      const terrainMat = new THREE.MeshStandardMaterial({
+        vertexColors: true,
+        map: createRockNoiseTexture(),
+        roughness: 0.9,
+        metalness: 0.04,
+      });
+
+      const terrainMesh = new THREE.Mesh(terrainGeo, terrainMat);
+      terrainMesh.receiveShadow = true;
+      terrainMesh.castShadow = true;
+      scene.add(terrainMesh);
+
+      const spireGroup = new THREE.Group();
+      const spireMat = new THREE.MeshStandardMaterial({
+        color: 0xb94a2a,
+        roughness: 0.88,
+        metalness: 0.05,
+        flatShading: true,
+      });
+
+      const spirePlacements = [
+        [-28, -54, 1.3], [-32, -26, 1.5], [-26, 6, 1.2], [-34, 34, 1.4], [-27, 56, 1.15],
+        [30, -52, 1.4],  [26, -18, 1.25], [33, 14, 1.55], [27, 42, 1.3],  [32, 62, 1.2]
+      ];
+
+      const spireGeo = new THREE.CylinderGeometry(1.4, 4.2, 11, 7);
+      const spireCapGeo = new THREE.DodecahedronGeometry(2.1, 0);
+
+      spirePlacements.forEach(function (item) {
+        const sx = item[0] + canyonCenterX(item[1]) * 0.35;
+        const sz = item[1];
+        const sc = item[2];
+        const sy = getTerrainHeight(sx, sz);
+
+        const tower = new THREE.Group();
+        const body = new THREE.Mesh(spireGeo, spireMat);
+        body.position.y = 4.5 * sc;
+        body.scale.set(sc, sc, sc);
+        body.castShadow = true;
+        body.receiveShadow = true;
+        tower.add(body);
+
+        const cap = new THREE.Mesh(spireCapGeo, spireMat);
+        cap.position.set(0.3 * sc, 9.8 * sc, -0.2 * sc);
+        cap.scale.set(sc * 0.9, sc * 0.75, sc * 0.9);
+        cap.rotation.y = sx * 0.4;
+        cap.castShadow = true;
+        cap.receiveShadow = true;
+        tower.add(cap);
+
+        tower.position.set(sx, sy - 0.6, sz);
+        tower.rotation.y = (sx + sz) * 0.25;
+        spireGroup.add(tower);
+      });
+      scene.add(spireGroup);
+
+      function createRibbonGeometry(centerFn, halfWidthFn, zMin, zMax, segments, yBase) {
+        const positions = [];
+        const uvs = [];
+        const indices = [];
+
+        for (let i = 0; i <= segments; i++) {
+          const t = i / segments;
+          const z = zMin + (zMax - zMin) * t;
+          const cx = centerFn(z);
+          const hw = halfWidthFn(z);
+
+          positions.push(cx - hw, yBase, z);
+          positions.push(cx + hw, yBase, z);
+          uvs.push(0, t * 14);
+          uvs.push(1, t * 14);
+
+          if (i < segments) {
+            const row = i * 2;
+            indices.push(row, row + 2, row + 1);
+            indices.push(row + 1, row + 2, row + 3);
+          }
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geo.setIndex(indices);
+        geo.computeVertexNormals();
+        return geo;
+      }
+
+      function createWaterTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#14b8a6';
+        ctx.fillRect(0, 0, 256, 256);
+
+        for (let i = 0; i < 160; i++) {
+          const x = Math.random() * 256;
+          const y = Math.random() * 256;
+          const w = 10 + Math.random() * 34;
+          const h = 3 + Math.random() * 6;
+          ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(6,182,212,0.32)';
+          ctx.fillRect(x, y, w, h);
+        }
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.encoding = THREE.sRGBEncoding;
+        return tex;
+      }
+
+      const waterTex = createWaterTexture();
+      const riverGeo = createRibbonGeometry(
+        riverCenterX,
+        function (z) {
+          return 2.9 + Math.sin(z * 0.12) * 0.45;
+        },
+        -79,
+        79,
+        96,
+        0.14
+      );
+      const riverMat = new THREE.MeshStandardMaterial({
+        color: 0x14c8be,
+        map: waterTex,
+        roughness: 0.16,
+        metalness: 0.18,
+        transparent: true,
+        opacity: 0.9,
+      });
+      const riverMesh = new THREE.Mesh(riverGeo, riverMat);
+      riverMesh.receiveShadow = true;
+      scene.add(riverMesh);
+
+      const roadPoints = [];
+      for (let z = 62; z >= -62; z -= 8) {
+        roadPoints.push(new THREE.Vector3(canyonCenterX(z) + 7.2, 0.08, z));
+      }
+      roadPoints.push(new THREE.Vector3(canyonCenterX(-67) + 10.5, 0.08, -68));
+      for (let z = -62; z <= 62; z += 8) {
+        roadPoints.push(new THREE.Vector3(canyonCenterX(z) + 13.4, 0.08, z));
+      }
+      roadPoints.push(new THREE.Vector3(canyonCenterX(67) + 10.5, 0.08, 68));
+
+      const roadCurve = new THREE.CatmullRomCurve3(roadPoints, true, 'catmullrom', 0.5);
+
+      function buildClosedRoadMesh(curve, halfW, segs) {
+        const positions = [];
+        const indices = [];
+        const up = new THREE.Vector3(0, 1, 0);
+
+        for (let i = 0; i <= segs; i++) {
+          const u = (i % segs) / segs;
+          const pt = curve.getPointAt(u);
+          const tan = curve.getTangentAt(u).normalize();
+          const side = new THREE.Vector3().crossVectors(up, tan).normalize();
+
+          const left = pt.clone().addScaledVector(side, -halfW);
+          const right = pt.clone().addScaledVector(side, halfW);
+          positions.push(left.x, 0.06, left.z);
+          positions.push(right.x, 0.06, right.z);
+
+          if (i < segs) {
+            const row = i * 2;
+            indices.push(row, row + 2, row + 1);
+            indices.push(row + 1, row + 2, row + 3);
+          }
+        }
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setIndex(indices);
+        geo.computeVertexNormals();
+        return geo;
+      }
+
+      const roadMat = new THREE.MeshStandardMaterial({
+        color: 0x9c7a5c,
+        roughness: 0.94,
+        metalness: 0.02,
+      });
+      const roadMesh = new THREE.Mesh(buildClosedRoadMesh(roadCurve, 1.45, 160), roadMat);
+      roadMesh.receiveShadow = true;
+      scene.add(roadMesh);
+
+      const yurtGroupAll = new THREE.Group();
+      const yurtWallMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.72, metalness: 0.04 });
+      const yurtRoofMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.68, metalness: 0.04 });
+      const yurtDeckMat = new THREE.MeshStandardMaterial({ color: 0x8b5a2b, roughness: 0.85, metalness: 0.05 });
+      const yurtOrnamentMat = new THREE.MeshStandardMaterial({ color: 0xb91c1c, roughness: 0.55, metalness: 0.15 });
+      const yurtWoodMat = new THREE.MeshStandardMaterial({ color: 0x5c3a21, roughness: 0.82, metalness: 0.05 });
+
+      function createEcoYurt() {
+        const yurt = new THREE.Group();
+
+        const deck = new THREE.Mesh(new THREE.CylinderGeometry(3.05, 3.15, 0.28, 24), yurtDeckMat);
+        deck.position.y = 0.14;
+        deck.castShadow = true;
+        deck.receiveShadow = true;
+        yurt.add(deck);
+
+        const wall = new THREE.Mesh(new THREE.CylinderGeometry(2.65, 2.7, 2.05, 24), yurtWallMat);
+        wall.position.y = 0.28 + 1.025;
+        wall.castShadow = true;
+        wall.receiveShadow = true;
+        yurt.add(wall);
+
+        const belt = new THREE.Mesh(new THREE.CylinderGeometry(2.69, 2.69, 0.24, 24), yurtOrnamentMat);
+        belt.position.y = 2.15;
+        yurt.add(belt);
+
+        const roof = new THREE.Mesh(new THREE.ConeGeometry(2.92, 1.75, 24), yurtRoofMat);
+        roof.position.y = 2.33 + 0.875;
+        roof.castShadow = true;
+        roof.receiveShadow = true;
+        yurt.add(roof);
+
+        const shanyraq = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.09, 8, 18), yurtWoodMat);
+        shanyraq.rotation.x = Math.PI / 2;
+        shanyraq.position.y = 3.92;
+        shanyraq.castShadow = true;
+        yurt.add(shanyraq);
+
+        const doorFrame = new THREE.Mesh(new THREE.BoxGeometry(0.96, 1.62, 0.32), yurtWoodMat);
+        doorFrame.position.set(0, 0.28 + 0.81, 2.62);
+        doorFrame.castShadow = true;
+        yurt.add(doorFrame);
+
+        const doorPanel = new THREE.Mesh(new THREE.BoxGeometry(0.72, 1.44, 0.36), yurtOrnamentMat);
+        doorPanel.position.set(0, 0.28 + 0.78, 2.64);
+        yurt.add(doorPanel);
+
+        return yurt;
+      }
+
+      const yurtZPositions = [-25, -8, 10, 27];
+      yurtZPositions.forEach(function (yz, idx) {
+        const yx = canyonCenterX(yz) - 1.6 + (idx % 2 === 0 ? -0.6 : 0.7);
+        const yurt = createEcoYurt();
+        yurt.position.set(yx, Math.max(0, getTerrainHeight(yx, yz)), yz);
+        yurt.rotation.y = Math.PI * 0.42 + (idx % 2 === 0 ? -0.18 : 0.15);
+        yurtGroupAll.add(yurt);
+      });
+      scene.add(yurtGroupAll);
+
+      const treeGroup = new THREE.Group();
+      const trunkMat = new THREE.MeshStandardMaterial({ color: 0x5c3d28, roughness: 0.9 });
+      const foliageMat = new THREE.MeshStandardMaterial({ color: 0x266b3a, roughness: 0.82 });
+      const blossomMat = new THREE.MeshStandardMaterial({ color: 0xf472b6, roughness: 0.75 });
+      const blossomMeshes = [];
+
+      const trunkGeo = new THREE.CylinderGeometry(0.18, 0.3, 1.5, 7);
+      const cone1Geo = new THREE.ConeGeometry(1.45, 2.3, 8);
+      const cone2Geo = new THREE.ConeGeometry(1.12, 1.9, 8);
+      const cone3Geo = new THREE.ConeGeometry(0.75, 1.45, 8);
+      const blossomGeo = new THREE.DodecahedronGeometry(0.32, 0);
+
+      function createPineTree(scale) {
+        const tree = new THREE.Group();
+
+        const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+        trunk.position.y = 0.75;
+        trunk.castShadow = true;
+        tree.add(trunk);
+
+        const c1 = new THREE.Mesh(cone1Geo, foliageMat);
+        c1.position.y = 2.15;
+        c1.castShadow = true;
+        c1.receiveShadow = true;
+        tree.add(c1);
+
+        const c2 = new THREE.Mesh(cone2Geo, foliageMat);
+        c2.position.y = 3.25;
+        c2.castShadow = true;
+        c2.receiveShadow = true;
+        tree.add(c2);
+
+        const c3 = new THREE.Mesh(cone3Geo, foliageMat);
+        c3.position.y = 4.25;
+        c3.castShadow = true;
+        tree.add(c3);
+
+        const b1 = new THREE.Mesh(blossomGeo, blossomMat);
+        b1.position.set(0.65, 2.4, 0.45);
+        b1.visible = false;
+        tree.add(b1);
+        blossomMeshes.push(b1);
+
+        const b2 = new THREE.Mesh(blossomGeo, blossomMat);
+        b2.position.set(-0.5, 3.1, -0.35);
+        b2.visible = false;
+        tree.add(b2);
+        blossomMeshes.push(b2);
+
+        tree.scale.setScalar(scale);
+        return tree;
+      }
+
+      const treeCoords = [];
+      for (let z = -66; z <= 66; z += 7.5) {
+        treeCoords.push([canyonCenterX(z) - 15.2 + Math.sin(z) * 1.1, z + 1.2, 0.85 + ((Math.abs(z) * 7) % 5) * 0.08]);
+        if (Math.abs(z % 15) > 3) {
+          treeCoords.push([canyonCenterX(z) - 5.4 + Math.cos(z) * 0.7, z - 1.4, 0.78 + ((Math.abs(z) * 3) % 4) * 0.07]);
+        }
+        treeCoords.push([canyonCenterX(z) + 17.6 + Math.sin(z * 1.3) * 0.9, z + 2.0, 0.92 + ((Math.abs(z) * 5) % 4) * 0.09]);
+      }
+
+      treeCoords.forEach(function (tc) {
+        const tx = tc[0];
+        const tz = tc[1];
+        const ty = getTerrainHeight(tx, tz);
+        const pine = createPineTree(tc[2]);
+        pine.position.set(tx, ty - 0.1, tz);
+        pine.rotation.y = (tx * 1.7 + tz) % (Math.PI * 2);
+        treeGroup.add(pine);
+      });
+      scene.add(treeGroup);
+
+      const jeepGroup = new THREE.Group();
+      const jeepRedMat = new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.3, metalness: 0.28 });
+      const jeepDarkMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.72, metalness: 0.25 });
+      const jeepGlassMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.12, metalness: 0.75 });
+      const jeepRimMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.25, metalness: 0.82 });
+      const jeepLightMat = new THREE.MeshStandardMaterial({
+        color: 0xfef08a,
+        emissive: 0xfacc15,
+        emissiveIntensity: 0.8,
+        roughness: 0.2,
+      });
+
+      const chassis = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.42, 4.3), jeepDarkMat);
+      chassis.position.y = 0.62;
+      chassis.castShadow = true;
+      jeepGroup.add(chassis);
+
+      const bodyLower = new THREE.Mesh(new THREE.BoxGeometry(2.05, 0.78, 4.1), jeepRedMat);
+      bodyLower.position.y = 1.15;
+      bodyLower.castShadow = true;
+      jeepGroup.add(bodyLower);
+
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.88, 0.72, 2.35), jeepRedMat);
+      cabin.position.set(0, 1.86, -0.35);
+      cabin.castShadow = true;
+      jeepGroup.add(cabin);
+
+      const glassBand = new THREE.Mesh(new THREE.BoxGeometry(1.92, 0.52, 2.2), jeepGlassMat);
+      glassBand.position.set(0, 1.85, -0.32);
+      jeepGroup.add(glassBand);
+
+      const roofRack = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.12, 1.9), jeepDarkMat);
+      roofRack.position.set(0, 2.28, -0.35);
+      jeepGroup.add(roofRack);
+
+      const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(2.12, 0.28, 0.35), jeepDarkMat);
+      frontBumper.position.set(0, 0.72, 2.15);
+      jeepGroup.add(frontBumper);
+
+      const hlLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 12), jeepLightMat);
+      hlLeft.rotation.x = Math.PI / 2;
+      hlLeft.position.set(-0.66, 1.18, 2.06);
+      jeepGroup.add(hlLeft);
+
+      const hlRight = hlLeft.clone();
+      hlRight.position.x = 0.66;
+      jeepGroup.add(hlRight);
+
+      const spareTire = new THREE.Mesh(new THREE.CylinderGeometry(0.46, 0.46, 0.28, 16), jeepDarkMat);
+      spareTire.rotation.x = Math.PI / 2;
+      spareTire.position.set(0, 1.32, -2.18);
+      jeepGroup.add(spareTire);
+
+      const wheelMeshes = [];
+      const wheelGeo = new THREE.CylinderGeometry(0.48, 0.48, 0.34, 16);
+      const rimGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.36, 12);
+      const wheelPositions = [
+        [-1.08, 0.48, 1.32],
+        [1.08, 0.48, 1.32],
+        [-1.08, 0.48, -1.32],
+        [1.08, 0.48, -1.32],
+      ];
+
+      wheelPositions.forEach(function (wp) {
+        const wheelAssembly = new THREE.Group();
+        const tire = new THREE.Mesh(wheelGeo, jeepDarkMat);
+        tire.rotation.z = Math.PI / 2;
+        tire.castShadow = true;
+        wheelAssembly.add(tire);
+
+        const rim = new THREE.Mesh(rimGeo, jeepRimMat);
+        rim.rotation.z = Math.PI / 2;
+        wheelAssembly.add(rim);
+
+        wheelAssembly.position.set(wp[0], wp[1], wp[2]);
+        jeepGroup.add(wheelAssembly);
+        wheelMeshes.push(wheelAssembly);
+      });
+
+      scene.add(jeepGroup);
+
+      const eagleGroup = new THREE.Group();
+      const eagleBodyMat = new THREE.MeshStandardMaterial({ color: 0x451a03, roughness: 0.8 });
+      const eagleBody = new THREE.Mesh(new THREE.ConeGeometry(0.28, 1.25, 8), eagleBodyMat);
+      eagleBody.rotation.x = Math.PI / 2;
+      eagleGroup.add(eagleBody);
+
+      const wingGeo = new THREE.BoxGeometry(1.75, 0.06, 0.55);
+      const leftWing = new THREE.Mesh(wingGeo, eagleBodyMat);
+      leftWing.position.set(-0.9, 0.05, 0);
+      eagleGroup.add(leftWing);
+
+      const rightWing = new THREE.Mesh(wingGeo, eagleBodyMat);
+      rightWing.position.set(0.9, 0.05, 0);
+      eagleGroup.add(rightWing);
+
+      eagleGroup.position.set(0, 32, 0);
+      scene.add(eagleGroup);
+
+      const particleCount = 420;
+      const particleGeo = new THREE.BufferGeometry();
+      const particlePositions = new Float32Array(particleCount * 3);
+      for (let i = 0; i < particleCount; i++) {
+        particlePositions[i * 3] = (Math.random() - 0.5) * 140;
+        particlePositions[i * 3 + 1] = Math.random() * 55 + 2;
+        particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 140;
+      }
+      particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+      const particleMat = new THREE.PointsMaterial({
+        color: 0xffffff,
+        size: 0.65,
+        transparent: true,
+        opacity: 0.85,
+      });
+      const weatherParticles = new THREE.Points(particleGeo, particleMat);
+      weatherParticles.visible = false;
+      scene.add(weatherParticles);
+
+      const SEASON_THEMES = {
+        summer: {
+          sky: 0x87ceeb,
+          fogDensity: 0.0036,
+          ambientIntensity: 0.9,
+          dirColor: 0xffeedd,
+          dirIntensity: 1.2,
+          hemiSky: 0x9be0ff,
+          hemiGround: 0x9b5434,
+          floorColor: new THREE.Color(0xc88a55),
+          cliffLowColor: new THREE.Color(0xc5522d),
+          cliffHighColor: new THREE.Color(0x9a371b),
+          strataColor: new THREE.Color(0xe09658),
+          spireColor: 0xb94a2a,
+          riverColor: 0x14c8be,
+          riverRoughness: 0.16,
+          riverMetalness: 0.18,
+          riverOpacity: 0.9,
+          roadColor: 0x9c7a5c,
+          foliageColor: 0x266b3a,
+          showBlossoms: false,
+          particles: 'none',
+        },
+        winter: {
+          sky: 0xdbeafe,
+          fogDensity: 0.0048,
+          ambientIntensity: 0.95,
+          dirColor: 0xf0f9ff,
+          dirIntensity: 1.15,
+          hemiSky: 0xe0f2fe,
+          hemiGround: 0xcbd5e1,
+          floorColor: new THREE.Color(0xf4f8fc),
+          cliffLowColor: new THREE.Color(0xdbe4ee),
+          cliffHighColor: new THREE.Color(0xf8fafc),
+          strataColor: new THREE.Color(0x9aa9b8),
+          spireColor: 0xcbd5e1,
+          riverColor: 0xbae6fd,
+          riverRoughness: 0.08,
+          riverMetalness: 0.35,
+          riverOpacity: 0.96,
+          roadColor: 0xcbd5e1,
+          foliageColor: 0x94b8b0,
+          showBlossoms: false,
+          particles: 'snow',
+        },
+        spring: {
+          sky: 0x8fd6f7,
+          fogDensity: 0.0034,
+          ambientIntensity: 0.92,
+          dirColor: 0xfff5e4,
+          dirIntensity: 1.22,
+          hemiSky: 0xa5e4ff,
+          hemiGround: 0x5c7c42,
+          floorColor: new THREE.Color(0x7aa854),
+          cliffLowColor: new THREE.Color(0xc25b38),
+          cliffHighColor: new THREE.Color(0xa64428),
+          strataColor: new THREE.Color(0xdc9a64),
+          spireColor: 0xb85234,
+          riverColor: 0x0ea5e9,
+          riverRoughness: 0.15,
+          riverMetalness: 0.2,
+          riverOpacity: 0.9,
+          roadColor: 0x8d7258,
+          foliageColor: 0x3b8c47,
+          showBlossoms: true,
+          particles: 'none',
+        },
+        autumn: {
+          sky: 0xf4c78d,
+          fogDensity: 0.0042,
+          ambientIntensity: 0.88,
+          dirColor: 0xffd29d,
+          dirIntensity: 1.25,
+          hemiSky: 0xfde68a,
+          hemiGround: 0x8c4220,
+          floorColor: new THREE.Color(0xbf7d40),
+          cliffLowColor: new THREE.Color(0xb84622),
+          cliffHighColor: new THREE.Color(0x882c14),
+          strataColor: new THREE.Color(0xe59f4c),
+          spireColor: 0xa83e1f,
+          riverColor: 0x0d9488,
+          riverRoughness: 0.18,
+          riverMetalness: 0.18,
+          riverOpacity: 0.92,
+          roadColor: 0x8a6443,
+          foliageColor: 0xd97706,
+          showBlossoms: false,
+          particles: 'leaves',
+        },
+      };
+
+      let currentSeason = 'summer';
+      const _tmpColor = new THREE.Color();
+
+      function applySeason(seasonKey) {
+        const theme = SEASON_THEMES[seasonKey];
+        if (!theme) return;
+        currentSeason = seasonKey;
+
+        scene.background.setHex(theme.sky);
+        scene.fog.color.setHex(theme.sky);
+        scene.fog.density = theme.fogDensity;
+
+        ambientLight.intensity = theme.ambientIntensity;
+        dirLight.color.setHex(theme.dirColor);
+        dirLight.intensity = theme.dirIntensity;
+        hemiLight.color.setHex(theme.hemiSky);
+        hemiLight.groundColor.setHex(theme.hemiGround);
+
+        const colAttr = terrainGeo.attributes.color;
+        for (let i = 0; i < vertCount; i++) {
+          const vx = posAttr.getX(i);
+          const vy = terrainBaseHeights[i];
+          const vz = posAttr.getZ(i);
+
+          if (vy < 0.65) {
+            _tmpColor.copy(theme.floorColor);
+            if (vy < -0.05) {
+              _tmpColor.multiplyScalar(0.76);
+            }
+          } else {
+            const ht = Math.min(1, vy / 28);
+            _tmpColor.copy(theme.cliffLowColor).lerp(theme.cliffHighColor, ht);
+            const band = Math.sin(vy * 0.9 + vx * 0.05 + vz * 0.05) * 0.5 + 0.5;
+            if (band > 0.65) {
+              _tmpColor.lerp(theme.strataColor, (band - 0.65) * 1.6);
+            }
+          }
+          colAttr.setXYZ(i, _tmpColor.r, _tmpColor.g, _tmpColor.b);
+        }
+        colAttr.needsUpdate = true;
+
+        spireMat.color.setHex(theme.spireColor);
+        riverMat.color.setHex(theme.riverColor);
+        riverMat.roughness = theme.riverRoughness;
+        riverMat.metalness = theme.riverMetalness;
+        riverMat.opacity = theme.riverOpacity;
+        roadMat.color.setHex(theme.roadColor);
+        foliageMat.color.setHex(theme.foliageColor);
+
+        for (let i = 0; i < blossomMeshes.length; i++) {
+          blossomMeshes[i].visible = theme.showBlossoms;
+        }
+
+        if (theme.particles === 'snow') {
+          weatherParticles.visible = true;
+          particleMat.color.setHex(0xffffff);
+          particleMat.size = 0.72;
+        } else if (theme.particles === 'leaves') {
+          weatherParticles.visible = true;
+          particleMat.color.setHex(0xf59e0b);
+          particleMat.size = 0.6;
+        } else {
+          weatherParticles.visible = false;
+        }
+      }
+
+      applySeason('summer');
+
+      let cameraMode = 'free';
+      let freeResetActive = false;
+      const freeDefaultPos = new THREE.Vector3(0, 45, 85);
+      const freeDefaultTarget = new THREE.Vector3(0, 0, 0);
+
+      controls.addEventListener('start', function () {
+        if (cameraMode === 'free') {
+          freeResetActive = false;
+        }
+      });
+
+      function setCameraMode(mode) {
+        cameraMode = mode;
+        if (mode === 'free') {
+          controls.enabled = true;
+          freeResetActive = true;
+        } else {
+          controls.enabled = false;
+          freeResetActive = false;
+        }
+      }
+
+      const seasonButtons = document.querySelectorAll('.season-btn');
+      seasonButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          seasonButtons.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          applySeason(btn.getAttribute('data-season'));
+        });
+      });
+
+      const camButtons = document.querySelectorAll('.cam-btn');
+      camButtons.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          camButtons.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          setCameraMode(btn.getAttribute('data-cam'));
+        });
+      });
+
+      const calcCard = document.getElementById('calcCard');
+      const calcToggleBtn = document.getElementById('calcToggleBtn');
+      const touristsSlider = document.getElementById('touristsSlider');
+      const priceSlider = document.getElementById('priceSlider');
+      const touristsVal = document.getElementById('touristsVal');
+      const priceVal = document.getElementById('priceVal');
+      const annualRevenueEl = document.getElementById('annualRevenue');
+      const paybackPeriodEl = document.getElementById('paybackPeriod');
+
+      calcToggleBtn.addEventListener('click', function () {
+        const isCollapsed = calcCard.classList.toggle('collapsed');
+        calcToggleBtn.setAttribute('aria-expanded', String(!isCollapsed));
+      });
+
+      function updateCalculator() {
+        const tourists = Number(touristsSlider.value);
+        const price = Number(priceSlider.value);
+
+        touristsVal.textContent = tourists + ' адам';
+        priceVal.textContent = price.toLocaleString('ru-RU') + ' ₸';
+
+        const annualMln = (tourists * price * 365) / 1000000;
+        annualRevenueEl.textContent = annualMln.toFixed(1) + ' млн ₸';
+
+        const capexMln = 450;
+        const netMargin = 0.65;
+        const paybackYears = capexMln / (annualMln * netMargin);
+        paybackPeriodEl.textContent = paybackYears.toFixed(1) + ' жыл';
+      }
+
+      touristsSlider.addEventListener('input', updateCalculator);
+      priceSlider.addEventListener('input', updateCalculator);
+      updateCalculator();
+
+      const clock = new THREE.Clock();
+      let jeepProgress = 0;
+      let eagleAngle = 0;
+
+      const _jeepPos = new THREE.Vector3();
+      const _jeepLook = new THREE.Vector3();
+      const _jeepTangent = new THREE.Vector3();
+      const _camDesiredPos = new THREE.Vector3();
+      const _camDesiredLook = new THREE.Vector3();
+      const _camCurrentLook = new THREE.Vector3(0, 0, 0);
+
+      function animate() {
+        requestAnimationFrame(animate);
+
+        const delta = Math.min(clock.getDelta(), 0.05);
+        const elapsed = clock.getElapsedTime();
+
+        jeepProgress = (jeepProgress + delta * 0.032) % 1;
+        roadCurve.getPointAt(jeepProgress, _jeepPos);
+        roadCurve.getTangentAt(jeepProgress, _jeepTangent).normalize();
+        _jeepLook.copy(_jeepPos).add(_jeepTangent);
+
+        jeepGroup.position.set(
+          _jeepPos.x,
+          0.08 + Math.sin(elapsed * 14) * 0.025,
+          _jeepPos.z
+        );
+        jeepGroup.lookAt(_jeepLook.x, jeepGroup.position.y, _jeepLook.z);
+
+        for (let i = 0; i < wheelMeshes.length; i++) {
+          wheelMeshes[i].rotation.x += delta * 9.5;
+        }
+
+        if (currentSeason !== 'winter') {
+          waterTex.offset.y -= delta * 0.35;
+        }
+
+        eagleAngle += delta * 0.28;
+        const ex = Math.cos(eagleAngle) * 32;
+        const ez = Math.sin(eagleAngle) * 48;
+        const ey = 32 + Math.sin(elapsed * 1.4) * 2.5;
+        eagleGroup.position.set(ex, ey, ez);
+        eagleGroup.rotation.y = -eagleAngle;
+        const flap = Math.sin(elapsed * 4.5) * 0.22;
+        leftWing.rotation.z = flap;
+        rightWing.rotation.z = -flap;
+
+        if (weatherParticles.visible) {
+          const pArr = particleGeo.attributes.position.array;
+          const fallSpeed = currentSeason === 'winter' ? 5.5 : 4.2;
+          const sway = currentSeason === 'winter' ? 1.4 : 2.8;
+          for (let i = 0; i < particleCount; i++) {
+            const idx = i * 3;
+            pArr[idx + 1] -= delta * fallSpeed;
+            pArr[idx] += Math.sin(elapsed + i) * delta * sway;
+            if (pArr[idx + 1] < 0.5) {
+              pArr[idx + 1] = 52 + Math.random() * 8;
+              pArr[idx] = (Math.random() - 0.5) * 140;
+            }
+          }
+          particleGeo.attributes.position.needsUpdate = true;
+        }
+
+        const dampFactor = 1 - Math.exp(-4.5 * delta);
+
+        if (cameraMode === 'eagle') {
+          const orbitRadius = 66;
+          _camDesiredPos.set(
+            Math.cos(eagleAngle) * orbitRadius,
+            40 + Math.sin(elapsed * 0.5) * 4,
+            Math.sin(eagleAngle) * orbitRadius
+          );
+          _camDesiredLook.set(0, 3, 0);
+          camera.position.lerp(_camDesiredPos, dampFactor);
+          _camCurrentLook.lerp(_camDesiredLook, dampFactor);
+          camera.lookAt(_camCurrentLook);
+          controls.target.copy(_camCurrentLook);
+        } else if (cameraMode === 'jeep') {
+          _camDesiredPos
+            .copy(_jeepPos)
+            .addScaledVector(_jeepTangent, -12.5);
+          _camDesiredPos.y = 6.2;
+          _camDesiredLook
+            .copy(_jeepPos)
+            .addScaledVector(_jeepTangent, 8.0);
+          _camDesiredLook.y = 2.0;
+
+          camera.position.lerp(_camDesiredPos, dampFactor);
+          _camCurrentLook.lerp(_camDesiredLook, dampFactor);
+          camera.lookAt(_camCurrentLook);
+          controls.target.copy(_camCurrentLook);
+        } else {
+          if (freeResetActive) {
+            camera.position.lerp(freeDefaultPos, dampFactor);
+            controls.target.lerp(freeDefaultTarget, dampFactor);
+            if (camera.position.distanceTo(freeDefaultPos) < 0.35) {
+              freeResetActive = false;
+            }
+          }
+          _camCurrentLook.copy(controls.target);
+          controls.update();
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      animate();
+
+      window.addEventListener('resize', function () {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      });
+    })();
+  </script>
+</body>
+</html>
